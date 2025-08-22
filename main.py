@@ -6,6 +6,8 @@ import asyncio
 async def main():
     Target = input("Enter the target URL (e.g., http://example.com): ")
     file_path = input("Enter the path to the wordlist file: ")
+    rate = float(input("Enter requests per second (Default: 10): ") or 10)
+
     try:
         count = 0
         wordlist =  load_wordlist(file_path)

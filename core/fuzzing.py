@@ -1,13 +1,16 @@
 import httpx 
 from typing import List, Dict 
 from urllib.parse import urljoin 
+import asyncio
+from Utils.rate_limiter import RateLimiter
 
-async def fetch_url(base_url: str, wordlist: List[str],status_filters: List[int] = None) -> Dict[str, int]:
+async def fetch_url(base_url: str, wordlist: List[str],status_filters: List[int] = None, requests_per_second: float = 10) -> Dict[str, int]:
     base_url = base_url.split('#')[0]
     if not base_url.endswith('/'):
         base_url += '/'
 
     results = {}
+    rate_limiter = RateLimiter(requests_per_second)
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -26,6 +29,8 @@ async def fetch_url(base_url: str, wordlist: List[str],status_filters: List[int]
         timeout=timeout
     ) as client:
         for word in wordlist:
+            await rate_limiter.wait()
+
             target_url = urljoin(base_url, word)
 
             try:
