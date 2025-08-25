@@ -10,5 +10,5 @@ class RateLimiter:
         now = time.time()
         elapsed = now - self.last_request
         if elapsed < self.delay:
-            asyncio.sleep(self.delay - elapsed)
+            await asyncio.sleep(self.delay - elapsed)
         self.last_request = time.time()

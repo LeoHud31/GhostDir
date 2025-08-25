@@ -36,7 +36,20 @@ async def Scanner(Target, rate):
     print(f"\nStarting scan on {Target}...\n")
     print("=" * 50)
 
-    results = await scan_url(Target, requests_per_second=rate)
+    if '/' in Target or ':' in Target or Target.startswith(('http://', 'https://', 'www.')):
+        print("Please enter the domain name only (e.g., vulnweb.com)")
+        return None
+    
+    do_subdomain = input("Do you want to perform a subdomain scan? (y/n): ").strip().lower() == 'y'
+    wordlist = None
+
+    if do_subdomain:
+        file_path = input("Enter path to subdomain wordlist file: ")
+        wordlist = load_wordlist(file_path)
+
+    results = await scan_url(Target, requests_per_second=rate,
+                             enable_subdomain_scan=do_subdomain,
+                             wordlist=wordlist)
 
     print("\nScan completed. Summary of results:")
     print("=" * 50)
@@ -46,7 +59,7 @@ async def Scanner(Target, rate):
 
 async def main():
     try: 
-        Target = input("Enter the target URL (e.g., http://example.com): ")
+        Target = input("For Fuzzing enter the target URL (e.g., http://example.com), for scanning Enter domain (example.com): ")
         rate = float(input("Enter requests per second (Default: 10): ") or 10)
         choice = input("Choose operation - Scan (s) or Fuzz (f): ").strip().lower()
     

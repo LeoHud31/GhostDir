@@ -1,18 +1,80 @@
 import httpx
 from typing import List, Dict, Union
+import asyncio
 from Utils.rate_limiter import RateLimiter
+import dns.resolver
+from urllib.parse import urlparse
+
+def clean_domain(domain: str) -> str:
+    domain = domain.replace('http://', '').replace('https://', '')
+    domain = domain.replace('www.', '')
+    domain = domain.split('/')[0]
+    domain = domain.split(':')[0]
+    return domain.strip()
+
+async def resolve_subdomain(subdomain: str, domain: str) -> Dict[str, Union[str, List[str]]]:
+    try:
+        resolver = dns.resolver.Resolver()
+        resolver.nameservers = ['8.8.8.8', '1.1.1.1']
+        resolver.timeout = 2
+        resolver.lifetime = 2
+
+        full_domain = f"{subdomain}.{domain}"
+        answers = dns.resolver.resolve(full_domain, 'A')
+        ips = [answer.to_text() for answer in answers]
+
+        return {'domain': full_domain, 'ips': ips}
+    except dns.resolver.NXDOMAIN:
+        return None
+    except Exception as e:
+        print(f"DNS resolution error for {full_domain}: {str(e)}")
+        return None
 
 
 async def scan_url(base_url: str, method: str = 'GET', 
-                    response_filters: List[str] = None, 
-                    requests_per_second: float = 10) -> Dict[str, Dict[str, Union[int, float, str]]]:
-    base_url = base_url.split('#')[0]
-    if not base_url.endswith('/'):
-        base_url += '/'
-
+                    response_filters: List[str] = None,
+                    enable_subdomain_scan: bool = False, 
+                    requests_per_second: float = 10,
+                    wordlist: List[str] = None)-> Dict[str, Dict[str, Union[int, float, str]]]:
+    
+    domain = clean_domain(base_url)
+    if not domain or '.' not in domain:
+        print("Invalid domain name provided.")
+    
+    http_url = f"http://{domain}"
     results = {}
     rate_limiter = RateLimiter(requests_per_second)
 
+    if enable_subdomain_scan and wordlist:
+        print(f"Starting subdomain scan for {domain}...")
+        print("=" * 50)
+
+        subdomain_tasks = []
+        total = len(wordlist)
+
+        for i, word in enumerate(wordlist, 1):
+            await rate_limiter.wait()
+            try:
+                result = await resolve_subdomain(word, domain)
+                if result:
+                    subdomain_tasks.append(result)
+                    print(f"Found: {result['domain']} -> {', '.join(result['ips'])}")
+            except Exception as e:
+                print(f"Error resolving {word}.{domain}: {str(e)}")
+
+            if i % 10 == 0:
+                print(f"Progress: {i}/{total} ({i/total*100:.2f}%)")
+
+        if subdomain_tasks:
+            results['subdomains'] = subdomain_tasks
+            print(f"Found {len(subdomain_tasks)} valid subdomains.")
+            for sub in subdomain_tasks:
+                print(f"{sub['domain']}: {', '.join(sub['ips'])}")
+        else:
+            print("No valid subdomains found.")
+
+    limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
+    timeout = httpx.Timeout(timeout=10.0)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -20,10 +82,6 @@ async def scan_url(base_url: str, method: str = 'GET',
         'Connection': 'keep-alive',
     }
 
-    limits = httpx.Limits(max_keepalive_connections=5, max_connections=10)
-    timeout = httpx.Timeout(timeout=10.0)
-
-    
     async with httpx.AsyncClient(
         follow_redirects=True,
         headers=headers,

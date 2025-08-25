@@ -13,7 +13,14 @@ class output:
                 if path.suffix == '.txt':
                     with open(path, 'a' if path.exists() else 'w') as f:
                         for key, value in results.items():
-                            f.write(f"{key}: {value}\n")
+                            if isinstance(value, dict):
+                                f.write(f"{key}:\n")
+                                for k, v in value.items():
+                                    f.write(f"  {k}: {v}\n")
+                                f.write("\n")
+                            else:
+                                f.write(f"{key}: {value}\n")
+                        
 
                 elif path.suffix == '.csv':
                     mode = 'a' if path.exists() else 'w'
@@ -53,38 +60,3 @@ class output:
 
         return results
 
-
-
-
-
-
-
-
-
-#class Output:
-#    @staticmethod
-#    def output_results(results, result_name = None):
-#        if result_name.endswith(('.txt', 'csv', 'json')) and result_name.exists(): 
-#            with open("result_name", "a") as f:
-#                f.write(f"{key}: {value}\n")
-#                print(f"Results appended to {result_name}")
-#                if result_name.endswith(('.txt', 'csv', 'json')) and result_name is not True():
-#                    with open("result_name", "x") as f:
-#                        for key, value in results.items():
-#                            f.write(f"{key}: {value}\n")
-#                        print(f"File created and appened to: {result_name}")
-#        else:
-#            print("No valid file name or path provided, printing results to console:")
-#            for key, value in results.items():
-#                print(f"{key}: {value}")
-#    
-#    def file_type(results, result_name, f):
-#        if result_name.endswith('.txt'):
-#            return 'txt'
-#        elif result_name.endswith('.csv'):
-#            writer = csv.writer(results)
-#            writer.writerows(results, f)
-#        elif result_name.endswith('.json'):
-#            json.dump(results, f, indent=4)
-#        else:
-#            raise ValueError("Unsupported file format. Use .txt, .json, or .csv")
