@@ -1,7 +1,6 @@
 import httpx 
 from typing import List, Dict 
 from urllib.parse import urljoin 
-import asyncio
 from Utils.rate_limiter import RateLimiter
 
 async def fetch_url(base_url: str, wordlist: List[str],status_filters: List[int] = None, requests_per_second: float = 10) -> Dict[str, int]:
