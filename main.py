@@ -2,6 +2,7 @@ from Utils.wordlist_loader import load_wordlist
 from core.fuzzing import fetch_url
 import asyncio
 from core.scanner import scan_url
+from Utils.output import output
 
 async def Fuzzing(Target, rate=10):
     count = 0
@@ -28,6 +29,8 @@ async def Fuzzing(Target, rate=10):
     print("=" * 50)
     print(f"Total URLs found: {len(results)}")
 
+    return results
+    
 
 async def Scanner(Target, rate):
     print(f"\nStarting scan on {Target}...\n")
@@ -39,19 +42,33 @@ async def Scanner(Target, rate):
     print("=" * 50)
     print(f"Total URLs found: {len(results)}")
 
-async def main():
-    Target = input("Enter the target URL (e.g., http://example.com): ")
-    rate = float(input("Enter requests per second (Default: 10): ") or 10)
-    choice = input("Choose operation - Scan (s) or Fuzz (f): ").strip().lower()
+    return results
 
-    if choice == 's':
-        await Scanner(Target, rate)
-    elif choice == 'f':
-        await Fuzzing(Target, rate)
-    else:
-        print("Invalid choice. Please enter 's' for Scan or 'f' for Fuzz.")
-        return
+async def main():
+    try: 
+        Target = input("Enter the target URL (e.g., http://example.com): ")
+        rate = float(input("Enter requests per second (Default: 10): ") or 10)
+        choice = input("Choose operation - Scan (s) or Fuzz (f): ").strip().lower()
     
+
+        if choice == 's':
+            results = await Scanner(Target, rate)
+        elif choice == 'f':
+            results = await Fuzzing(Target, rate)
+        else:
+            print("Invalid choice. Please enter 's' for Scan or 'f' for Fuzz.")
+            return
+    
+        if results:
+            if input("Do you want to save results to a file? (y/n): ").lower() == 'y':
+                file_name = input("Enter filename with extension (e.g., results.txt): ")
+                output.output_results(results, file_name)
+            else:
+                output.output_results(results)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
