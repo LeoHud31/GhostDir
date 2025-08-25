@@ -60,3 +60,5 @@ async def scan_url(base_url: str, method: str = 'GET',
             print(f"Connection error for {base_url}")
         except Exception as e:
             print(f"Unexpected error for {base_url}: {str(e)}")
+
+    return results
