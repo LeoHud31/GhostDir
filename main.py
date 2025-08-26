@@ -3,25 +3,31 @@ from core.fuzzing import fetch_url
 import asyncio
 from core.scanner import scan_url
 from Utils.output import output
+from typing import Optional, Dict, Any
+
+def parse_status_filters(user_input: str) -> Optional[list[int]]:
+    if not user_input:
+        return None
+    try:
+        return [int(code.strip()) for code in user_input.split(',')]
+    except ValueError:
+        print("No valid status codes given, proceeding without filters.")
+        return None
+
+def print_summary(results: Dict[str, Any]) -> None:
+    print("\nOperation completed. Summary of results:")
+    print("=" * 50)
+    print(f"Total URLs found: {len(results)}")
 
 
 #fuzzing function this takes in target, file path and status filters to fuzzing a website URL
-async def Fuzzing(Target, rate):
+async def Fuzzing(Target: str, rate: float) -> Dict[str, int]:
     #asks user for further inputs if fuzzing is selected
     file_path = input("Enter the path to the wordlist file: ")
     wordlist =  load_wordlist(file_path)
-    status_filters = input("Enter the status filters (leave blank for none)")
+    status_filters = input("Enter the status filters with commas (eg: 200,301)(leave blank for none)")
 
-    #checks the status filters and converts them to a list of integers, if any inputted
-    if not status_filters:
-        status_filters = None
-    else:
-        try:
-            status_filters = [int(code) for code in status_filters.split(',')]
-        except ValueError:
-            print("No valid status codes given, proceeding without filters.")
-            status_filters = None
-
+    status_filters = parse_status_filters(status_filters)
 
     print(f"\nStarting fuzzing on {Target} with {len(wordlist)} words...\n")
     print("=" * 50)
@@ -35,7 +41,7 @@ async def Fuzzing(Target, rate):
     return results
     
 # takes in target, rate and file path to scan a domain for any subdomains
-async def Scanner(Target, rate):
+async def Scanner(Target: str, rate: float) -> Dict[str, Any]:
     print(f"\nStarting scan on {Target}...\n")
     print("=" * 50)
 

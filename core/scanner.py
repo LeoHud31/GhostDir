@@ -3,7 +3,7 @@ from typing import List, Dict, Union
 import asyncio
 from Utils.rate_limiter import RateLimiter
 import dns.resolver
-from urllib.parse import urlparse
+
 
 def clean_domain(domain: str) -> str:
     domain = domain.replace('http://', '').replace('https://', '')
@@ -13,25 +13,28 @@ def clean_domain(domain: str) -> str:
     return domain.strip()
 
 async def resolve_subdomain(subdomain: str, domain: str) -> Dict[str, Union[str, List[str]]]:
+    full_domain = f"{subdomain}.{domain}"
     try:
         resolver = dns.resolver.Resolver()
         resolver.nameservers = ['8.8.8.8', '1.1.1.1']
         resolver.timeout = 2
         resolver.lifetime = 2
 
-        full_domain = f"{subdomain}.{domain}"
+
         answers = dns.resolver.resolve(full_domain, 'A')
         ips = [answer.to_text() for answer in answers]
-
         return {'domain': full_domain, 'ips': ips}
+    
     except dns.resolver.NXDOMAIN:
+        print(f"Subdomain {full_domain} does not exist.")
         return None
     except Exception as e:
         print(f"DNS resolution error for {full_domain}: {str(e)}")
         return None
 
 
-async def scan_url(base_url: str, method: str = 'GET', 
+async def scan_url(base_url: str, 
+                    method: str = 'GET', 
                     response_filters: List[str] = None,
                     enable_subdomain_scan: bool = False, 
                     requests_per_second: float = 10,
@@ -41,7 +44,7 @@ async def scan_url(base_url: str, method: str = 'GET',
     if not domain or '.' not in domain:
         print("Invalid domain name provided.")
     
-    http_url = f"http://{domain}"
+
     results = {}
     rate_limiter = RateLimiter(requests_per_second)
 
