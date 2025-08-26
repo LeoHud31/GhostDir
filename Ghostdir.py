@@ -79,7 +79,7 @@ async def main(args: argparse.Namespace) -> None:
         print(f"An error occurred: {e}")
 
 #main action driver
-if __name__ == "__main__":
+if __name__ == "GhostDir":
     parser = argparse.ArgumentParser(description="GhostDir: A tool for subdomain scanning and URL fuzzing.")
 
     parser.add_argument("--target", required=True, help="target URL for fuzzing (e.g., http://example.com) or domain for scanning (e.g., example.com)")
