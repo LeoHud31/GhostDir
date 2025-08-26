@@ -2,13 +2,14 @@ from pathlib import Path
 import csv
 import json
 
-
+#main class for output
 class output:
     @staticmethod
     def output_results(results, result_name = None):
         if result_name:
             path = Path(result_name)
 
+            #Logic to save results as a text file
             try:
                 if path.suffix == '.txt':
                     with open(path, 'a' if path.exists() else 'w') as f:
@@ -21,7 +22,7 @@ class output:
                             else:
                                 f.write(f"{key}: {value}\n")
                         
-
+            #Logic to save results as a csv file
                 elif path.suffix == '.csv':
                     mode = 'a' if path.exists() else 'w'
                     with open(path, mode, newline='') as f:
@@ -31,6 +32,7 @@ class output:
                         for key, value in results.items():
                             writer.writerow([key, value])
                 
+            #Logic to save results as a json file
                 elif path.suffix == '.json':
                     if path.exists():
                         with open(path, 'r') as f:
@@ -45,7 +47,7 @@ class output:
                     print("Unsupported file format. Please use .txt, .csv, or .json")
                 
                 print(f"Results saved to {result_name} saved at location {path}")
-
+                
             except Exception as e:
                 print(f"Error saving results: {e}")
                 print("Printing results to console instead:")
