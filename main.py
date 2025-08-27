@@ -50,11 +50,9 @@ async def Scanner(target: str, rate: float, wordlist: str) -> Dict[str, Any]:
     print(f"\nStarting scan on {target}...\n")
     print("=" * 50)
 
-    if '/' in target or ':' in target or target.startswith(('http://', 'https://', 'www.')):
-        print("Please enter the domain name only (e.g., example.com)")
-        return None
-    
-    
+    if not target.startswith(('http://', 'https://')):
+        target = f"http://{target}"
+
 
     if not os.path.exists(wordlist):
         print(f"Error: Wordlist file '{wordlist}' not found.")

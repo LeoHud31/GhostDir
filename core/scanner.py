@@ -16,17 +16,56 @@ async def resolve_subdomain(subdomain: str, domain: str) -> Dict[str, Union[str,
     full_domain = f"{subdomain}.{domain}"
     try:
         resolver = dns.resolver.Resolver()
-        resolver.nameservers = ['8.8.8.8', '1.1.1.1']
-        resolver.timeout = 2
-        resolver.lifetime = 2
+        resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4', '1.0.0.1']
+        resolver.timeout = 10
+        resolver.lifetime = 10
 
 
-        answers = dns.resolver.resolve(full_domain, 'A')
-        ips = [answer.to_text() for answer in answers]
-        return {'domain': full_domain, 'ips': ips}
+        ips = []
+        record_types = []
+        
+        try:
+            answers = resolver.resolve(full_domain, 'A')
+            ips.extend([answer.to_text() for answer in answers])
+            record_types.append('A')
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            pass
+        
+        try:
+            answers = resolver.resolve(full_domain, 'AAAA')
+            ips.extend([answer.to_text() for answer in answers])
+            record_types.append('AAAA')
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            pass
+            
+        try:
+            answers = resolver.resolve(full_domain, 'CNAME')
+            cnames = [answer.to_text() for answer in answers]
+            record_types.append('CNAME')
+            
+            for cname in cnames:
+                try:
+                    cname_answers = resolver.resolve(cname.rstrip('.'), 'A')
+                    ips.extend([answer.to_text() for answer in cname_answers])
+                except:
+                    ips.append(f"CNAME -> {cname}")
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            pass
+
+        if ips:
+            return {
+                'domain': full_domain, 
+                'ips': ips,
+                'record_types': record_types
+            }
+        else:
+            return None
     
     except dns.resolver.NXDOMAIN:
-        print(f"Subdomain {full_domain} does not exist.")
+        print(f"DEBUG: NXDOMAIN for {full_domain}")
+        return None
+    except dns.exception.Timeout:
+        print(f"DNS timeout for {full_domain}")
         return None
     except Exception as e:
         print(f"DNS resolution error for {full_domain}: {str(e)}")
@@ -95,9 +134,9 @@ async def scan_url(base_url: str,
 
         try:
             if method.upper() == 'GET':
-                response = await client.get(base_url)
+                response = await client.get(base_url) 
             elif method.upper() == 'HEAD':
-                response = await client.head(base_url)
+                response = await client.head(base_url) 
             else:
                 raise ValueError("Unsupported HTTP method. Use 'GET' or 'HEAD'.")
 
@@ -111,7 +150,7 @@ async def scan_url(base_url: str,
                     'content_length': content_length,
                     'response_time': response_time
                 }
-                print(f"Found: {base_url} (Status: {status_code}, Length: {content_length}, Time: {response_time:.2f}s)")
+                print(f"Found: {domain} (Status: {status_code}, Length: {content_length}, Time: {response_time:.2f}s)")
 
         except httpx.RequestError as e:
             print(f"Request error for {base_url}: {str(e)}")
