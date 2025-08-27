@@ -5,6 +5,7 @@ from core.scanner import scan_url
 from Utils.output import output
 from typing import Optional, Dict, Any
 import argparse
+import os
 
 def parse_status_filters(user_input: str) -> Optional[list[int]]:
     if not user_input:
@@ -21,33 +22,54 @@ def print_summary(results: Dict[str, Any]) -> None:
     print(f"Total URLs found: {len(results)}")
 
 
-async def Fuzzing(Target: str, wordlist: str, rate: float) -> Dict[str, int]:
+async def Fuzzing(target: str, wordlist: str, rate: float, status_filters: str) -> Dict[str, int]:
+    print(f"Debug: loading wordlist from {wordlist}") #debug
+    print(f"file exists: {os.path.isfile(wordlist)}") #debug
+
     wordlist_data =  load_wordlist(wordlist)
-    status_filters = parse_status_filters(status_filters)
+    status_filters_parsed = parse_status_filters(status_filters)
 
-    print(f"\nStarting fuzzing on {Target} with {len(wordlist_data)} words...\n")
+    print(f"\nStarting fuzzing on {target} with {len(wordlist_data)} words...\n")
     print("=" * 50)
+    
+    try:
+        results = await fetch_url(target, wordlist_data, status_filters_parsed, requests_per_second=rate)
 
-    results = await fetch_url(Target, wordlist, status_filters, requests_per_second=rate)
-
-    print("\nFuzzing completed. Summary of results:")
-    print("=" * 50)
-    print(f"Total URLs found: {len(results)}")
+        print("\nFuzzing completed. Summary of results:")
+        print("=" * 50)
+        print(f"Total URLs found: {len(results)}")
+    
+    except Exception as e:
+        print(f"An error occurred during fuzzing: {e}")
+        results = {}
 
     return results
     
 
-async def Scanner(Target: str, rate: float, wordlist: str) -> Dict[str, Any]:
-    print(f"\nStarting scan on {Target}...\n")
+async def Scanner(target: str, rate: float, wordlist: str) -> Dict[str, Any]:
+    print(f"\nStarting scan on {target}...\n")
     print("=" * 50)
 
-    if '/' in Target or ':' in Target or Target.startswith(('http://', 'https://', 'www.')):
+    if '/' in target or ':' in target or target.startswith(('http://', 'https://', 'www.')):
         print("Please enter the domain name only (e.g., example.com)")
         return None
     
-    wordlist_data = load_wordlist(wordlist)
+    
 
-    results = await scan_url(Target, requests_per_second=rate,
+    if not os.path.exists(wordlist):
+        print(f"Error: Wordlist file '{wordlist}' not found.")
+        return {}
+
+    try:
+        wordlist_data = load_wordlist(wordlist)
+        if not wordlist_data:
+            print("Error: Wordlist is empty or could not be loaded.")
+            return {}
+    except Exception as e:
+        print(f"An error occurred while loading the wordlist: {e}")
+        return {}
+
+    results = await scan_url(target, requests_per_second=rate,
                              enable_subdomain_scan=True,
                              wordlist=wordlist_data)
 
@@ -62,9 +84,9 @@ async def main(args: argparse.Namespace) -> None:
 
     try: 
         if args.mode == 'scan':
-            results = await Scanner(args.Target, args.rate, args.wordlist)
+            results = await Scanner(args.target, args.rate, args.wordlist)
         elif args.mode == 'fuzz':
-            results = await Fuzzing(args.Target, args.rate, args.wordlist, args.status_filters)
+            results = await Fuzzing(args.target, args.wordlist, args.rate, args.status_filters)
         else:
             print("Invalid choice. Please enter scan or fuzz.")
             return
@@ -79,7 +101,7 @@ async def main(args: argparse.Namespace) -> None:
         print(f"An error occurred: {e}")
 
 #main action driver
-if __name__ == "GhostDir":
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GhostDir: A tool for subdomain scanning and URL fuzzing.")
 
     parser.add_argument("--target", required=True, help="target URL for fuzzing (e.g., http://example.com) or domain for scanning (e.g., example.com)")
@@ -90,5 +112,4 @@ if __name__ == "GhostDir":
     parser.add_argument("--output", type=str, help="Output file name (supports .txt, .csv, .json)")
 
     args = parser.parse_args()
-
-    asyncio.run(main())
+    asyncio.run(main(args))
