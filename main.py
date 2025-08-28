@@ -47,8 +47,6 @@ async def Fuzzing(target: str, wordlist: str, rate: float, status_filters: str) 
     
 
 async def Scanner(target: str, rate: float, wordlist: str) -> Dict[str, Any]:
-    print(f"\nStarting scan on {target}...\n")
-    print("=" * 50)
 
     if not target.startswith(('http://', 'https://')):
         target = f"http://{target}"
@@ -70,10 +68,6 @@ async def Scanner(target: str, rate: float, wordlist: str) -> Dict[str, Any]:
     results = await scan_url(target, requests_per_second=rate,
                              enable_subdomain_scan=True,
                              wordlist=wordlist_data)
-
-    print("\nScan completed. Summary of results:")
-    print("=" * 50)
-    print(f"Total URLs found: {len(results)}")
 
     return results
 
