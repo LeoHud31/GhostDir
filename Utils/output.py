@@ -63,11 +63,15 @@ def write_csv(path: Path, results: Dict[str, Any]) -> None:
 
 
 def write_json(path: Path, results: Dict[str, Any]) -> None:
+    existing_data = {}
     if path.exists():
-        with open(path, 'r', encoding="utf-8") as f:
-            existing_data = json.load(f)
-            existing_data.update(results)
-            results = existing_data
+        try:
+            with open(path, 'r', encoding="utf-8") as f:
+                existing_data = json.load(f)
+        except:
+            pass
+
+    existing_data.update(results)
     
     with open(path, 'w', encoding="utf-8") as f:
         json.dump(results, f, indent=4)
