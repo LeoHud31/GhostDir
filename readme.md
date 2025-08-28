@@ -1,3 +1,9 @@
+Contents
+File path
+File functions
+Syntax of inputs
+Example commands
+
 file paths
 
 GhostDir
@@ -62,4 +68,26 @@ Syntax of inputs
 --wordlist - selects what input file would be used
 --rate - requests per second
 --status-filters - http status codes that are filtered out only used for fuzzing
---output - selects what the output file will be
+--output - selects what the output file will be (only accepts .txt, .csv, .json)
+
+Example commands
+
+Subdomain scanning
+# Basic subdomain scan
+python main.py --target example.com --mode scan --wordlist wordlists/subdomains.txt
+
+# Fast scan with higher rate limit
+python main.py --target example.com --mode scan --wordlist wordlists/subdomains.txt --rate 50
+
+# Save results to file
+python main.py --target example.com --mode scan --wordlist wordlists/subdomains.txt --output results.json
+
+URL Fuzzing
+# Basic directory fuzzing
+python main.py --target https://example.com --mode fuzz --wordlist wordlists/directories.txt
+
+# Filter specific status codes
+python main.py --target https://example.com --mode fuzz --wordlist wordlists/directories.txt --status-filters 200,301,403
+
+# High-speed fuzzing
+python main.py --target https://example.com --mode fuzz --wordlist wordlists/directories.txt --rate 100
