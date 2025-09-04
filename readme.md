@@ -1,10 +1,17 @@
-Contents
+# Contents
+Setup
 File path
 File functions
 Syntax of inputs
 Example commands
 
-file paths
+# Setup
+Use terminal to cd into file location eg: cd documents/GhostDir
+Run python main.py
+enter command (see example commands for direction of use)
+
+
+# File Paths
 
 GhostDir
 |
@@ -25,7 +32,7 @@ GhostDir
 |
 |-- readme.md
 
-File functions
+# File functions
 
 main.py
 runs the program:
@@ -35,7 +42,7 @@ Scanner - runs the scanner function
 Main - runs the rest of the file, runs the parse_status_filters and waits for user entering 'scan' or 'fuzz'
 name = main - runs the parser for the user input
 
-Utils/
+# Utils/
 
 output.py
 output_results - drives the other functions
@@ -52,7 +59,7 @@ wait - times how long since last request for throttling
 
 init.py - used for caching
 
-Core/
+# Core/
 init.py - used for caching
 
 fuzzing.py
@@ -62,7 +69,7 @@ scanner.py
 clean_domain - santises the domain thats been entered
 scan_url - adds the subdomain to the front and runs them
 
-Syntax of inputs 
+# Syntax of inputs 
 --target - selects the targert
 --mode - scan or fuzz
 --wordlist - selects what input file would be used
@@ -70,7 +77,7 @@ Syntax of inputs
 --status-filters - http status codes that are filtered out only used for fuzzing
 --output - selects what the output file will be (only accepts .txt, .csv, .json)
 
-Example commands
+# Example commands
 
 Subdomain scanning
 # Basic subdomain scan
